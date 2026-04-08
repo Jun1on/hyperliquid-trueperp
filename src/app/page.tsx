@@ -1,66 +1,49 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import styles from "./home.module.css";
 
 export default function Home() {
+  const [coin, setCoin] = useState("");
+  const router = useRouter();
+
+  function go() {
+    const trimmed = coin.trim();
+    if (trimmed) router.push(`/${trimmed}`);
+  }
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className={styles.root}>
+      <div className={styles.card}>
+        <h1 className={styles.title}>trueperp</h1>
+        <p className={styles.subtitle}>
+          Funding-adjusted price charts for Hyperliquid perpetuals.
+          <br />
+          See the true long ROI with funding costs baked in.
+        </p>
+
+        <div className={styles.inputRow}>
+          <input
+            className={styles.input}
+            placeholder="e.g. BTC, ETH, vntl:ANTHROPIC"
+            value={coin}
+            onChange={(e) => setCoin(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && go()}
+            autoFocus
+          />
+          <button className={styles.goBtn} onClick={go}>View chart</button>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className={styles.examples}>
+          <span className={styles.exLabel}>Try:</span>
+          {["BTC", "ETH", "SOL", "vntl:ANTHROPIC"].map((c) => (
+            <button key={c} className={styles.exBtn} onClick={() => router.push(`/${c}`)}>
+              {c}
+            </button>
+          ))}
         </div>
-      </main>
+      </div>
     </div>
   );
 }
