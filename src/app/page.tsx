@@ -10,7 +10,7 @@ export default function Home() {
 
   function go() {
     const trimmed = coin.trim();
-    if (trimmed) router.push(`/${trimmed}`);
+    if (trimmed) router.push(`/${encodeURIComponent(trimmed)}`);
   }
 
   return (
@@ -38,7 +38,7 @@ export default function Home() {
         <div className={styles.examples}>
           <span className={styles.exLabel}>Try:</span>
           {["BTC", "ETH", "SOL", "vntl:ANTHROPIC"].map((c) => (
-            <button key={c} className={styles.exBtn} onClick={() => router.push(`/${c}`)}>
+            <button key={c} className={styles.exBtn} onClick={() => router.push(`/${encodeURIComponent(c)}`)}>
               {c}
             </button>
           ))}
