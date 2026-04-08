@@ -167,7 +167,8 @@ export function buildChartPayload(
   const fundingBars: BarPoint[] = [];
   const cumulativeLine: LinePoint[] = [];
 
-  let cumMultiplier = 1.0;
+  let cumFundingUSD = 0;
+  const firstClose = parseFloat(candles[0].c);
 
   for (let i = 0; i < candles.length; i++) {
     const c = candles[i];
@@ -185,9 +186,8 @@ export function buildChartPayload(
       close,
     });
 
-    // Funding-adjusted: apply multiplier BEFORE this bar's rate
-    // (the multiplier accumulated up to but not including this period)
-    adjustedLine.push({ time: timeSec, value: close * cumMultiplier });
+    // Funding-adjusted: nominal USD version (Mark Price - accumulated USD payments)
+    adjustedLine.push({ time: timeSec, value: close - cumFundingUSD });
 
     // Funding rate bar (annualised %)
     fundingBars.push({
@@ -195,18 +195,18 @@ export function buildChartPayload(
       value: annRate * 100,
     });
 
-    // Cumulative cost so far (negative = cost to longs)
-    cumulativeLine.push({ time: timeSec, value: (cumMultiplier - 1) * 100 });
+    // Cumulative cost so far in % relative to inception price
+    cumulativeLine.push({ time: timeSec, value: -(cumFundingUSD / firstClose) * 100 });
 
-    // Update multiplier for next bar: longs pay rate each period
-    cumMultiplier *= (1 - rate);
+    // Update USD cost for NEXT period: Payment = Position (1) * Mark * Rate
+    cumFundingUSD += close * rate;
   }
 
   // Summary stats
   const rates = candles.map((c) => fundingRateAt(c.t));
   const avgAnnRate = rates.reduce((s, r) => s + r, 0) / rates.length * 8760 * 100;
   const pctPositive = (rates.filter((r) => r > 0).length / rates.length) * 100;
-  const cumCost = (1 - cumMultiplier) * 100; // positive = % paid by longs
+  const cumCost = (cumFundingUSD / firstClose) * 100; // Total USD paid as % of start price
 
   const startDate = new Date(candles[0].t).toISOString().slice(0, 10);
   const endDate   = new Date(candles[candles.length - 1].t).toISOString().slice(0, 10);
