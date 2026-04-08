@@ -64,7 +64,7 @@ export interface ChartPayload {
     startDate: string;
     endDate: string;
     totalDays: number;
-    cumFundingCostPct: number;
+    cumFundingCostUSD: number;
     avgAnnRatePct: number;
     pctPositive: number;
   };
@@ -173,8 +173,8 @@ export function buildChartPayload(
   for (let i = 0; i < candles.length; i++) {
     const c = candles[i];
     const timeSec = Math.floor(c.t / 1000);
-    const close   = parseFloat(c.c);
-    const rate    = fundingRateAt(c.t);
+    const close = parseFloat(c.c);
+    const rate = fundingRateAt(c.t);
     const annRate = rate * 8760; // hourly -> annualised
 
     // Mark candle
@@ -182,21 +182,20 @@ export function buildChartPayload(
       time: timeSec,
       open: parseFloat(c.o),
       high: parseFloat(c.h),
-      low:  parseFloat(c.l),
+      low: parseFloat(c.l),
       close,
     });
 
     // Funding-adjusted: nominal USD version (Mark Price - accumulated USD payments)
     adjustedLine.push({ time: timeSec, value: close - cumFundingUSD });
 
-    // Funding rate bar (annualised %)
     fundingBars.push({
       time: timeSec,
       value: annRate * 100,
     });
 
-    // Cumulative cost so far in % relative to inception price
-    cumulativeLine.push({ time: timeSec, value: -(cumFundingUSD / firstClose) * 100 });
+    // Cumulative cost so far in USD (Positive = Longs pay)
+    cumulativeLine.push({ time: timeSec, value: cumFundingUSD });
 
     // Update USD cost for NEXT period: Payment = Position (1) * Mark * Rate
     cumFundingUSD += close * rate;
@@ -206,10 +205,10 @@ export function buildChartPayload(
   const rates = candles.map((c) => fundingRateAt(c.t));
   const avgAnnRate = rates.reduce((s, r) => s + r, 0) / rates.length * 8760 * 100;
   const pctPositive = (rates.filter((r) => r > 0).length / rates.length) * 100;
-  const cumCost = (cumFundingUSD / firstClose) * 100; // Total USD paid as % of start price
+  const cumCost = cumFundingUSD; // Total USD paid
 
   const startDate = new Date(candles[0].t).toISOString().slice(0, 10);
-  const endDate   = new Date(candles[candles.length - 1].t).toISOString().slice(0, 10);
+  const endDate = new Date(candles[candles.length - 1].t).toISOString().slice(0, 10);
   const totalDays = Math.round((candles[candles.length - 1].t - candles[0].t) / 86400000);
 
   return {
@@ -217,7 +216,7 @@ export function buildChartPayload(
     adjustedLine,
     fundingBars,
     cumulativeLine,
-    meta: { coin, label, startDate, endDate, totalDays, cumFundingCostPct: cumCost, avgAnnRatePct: avgAnnRate, pctPositive },
+    meta: { coin, label, startDate, endDate, totalDays, cumFundingCostUSD: cumCost, avgAnnRatePct: avgAnnRate, pctPositive },
   };
 }
 
